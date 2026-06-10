@@ -1026,7 +1026,7 @@ fn validate_and_register_binding_no_advance(
 /// arrow params, or methods. Checks for duplicate param names across all
 /// params including those inside destructured patterns.
 fn accumulate_param_name(p: P, name: String) -> Result(P, ParseError) {
-  case p.in_formal_params || p.in_arrow_params || p.in_method {
+  case p.in_formal_params || p.in_arrow_params {
     True ->
       case list.contains(p.param_bound_names, name) {
         True ->
