@@ -231,6 +231,20 @@ pub fn tokenize_module(source: String) -> Result(List(Token), LexError) {
   do_tokenize(bytes, 0, 1, [], LexModule)
 }
 
+/// Re-tokenize `bytes` starting at byte offset `pos` on source line `line`.
+/// Token positions stay absolute. Used by the parser after re-scanning a
+/// regex literal from source: the original pass has no regex context, so a
+/// `//` or `/*` inside a regex body starts a comment there and swallows
+/// everything after the regex on that line.
+pub fn tokenize_from(
+  bytes: BitArray,
+  pos: Int,
+  line: Int,
+  mode: LexMode,
+) -> Result(List(Token), LexError) {
+  do_tokenize(bytes, pos, line, [], mode)
+}
+
 fn do_tokenize(
   bytes: BitArray,
   pos: Int,

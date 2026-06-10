@@ -1022,11 +1022,11 @@ fn validate_and_register_binding_no_advance(
   Ok(#(p, ast.IdentifierPattern(name: val)))
 }
 
-/// Accumulate a binding name in param_bound_names when inside formal params,
-/// arrow params, or methods. Checks for duplicate param names across all
-/// params including those inside destructured patterns.
+/// Accumulate a binding name in param_bound_names when inside formal params
+/// or arrow params. Checks for duplicate param names across all params
+/// including those inside destructured patterns.
 fn accumulate_param_name(p: P, name: String) -> Result(P, ParseError) {
-  case p.in_formal_params || p.in_arrow_params || p.in_method {
+  case p.in_formal_params || p.in_arrow_params {
     True ->
       case list.contains(p.param_bound_names, name) {
         True ->
@@ -5700,24 +5700,29 @@ fn parse_regex_literal(p: P) -> Result(#(P, ast.Expression), ParseError) {
       let pattern =
         regex.byte_slice_source(p.bytes, body_start, end_pos - 1 - body_start)
       let flags_str = string.join(flags, "")
-      // Now skip tokens until we're past this regex in the token stream
-      use p2 <- result.try(skip_tokens_past(p, flags_end))
-      Ok(#(p2, ast.RegExpLiteral(pattern: pattern, flags: flags_str)))
-    }
-    Error(msg) -> Error(LexerError(message: msg, pos: start_pos))
-  }
-}
-
-fn skip_tokens_past(p: P, target_pos: Int) -> Result(P, ParseError) {
-  case peek(p) {
-    Eof -> Ok(p)
-    _ -> {
-      let token_end = pos_of(p) + peek_raw_len(p)
-      case token_end >= target_pos {
-        True -> Ok(advance(p))
-        False -> skip_tokens_past(advance(p), target_pos)
+      // The original lexer pass had no regex context, so tokens inside the
+      // regex span are unreliable — a `//` or `/*` in the body even starts a
+      // comment there and swallows source past the regex. Re-tokenize from
+      // just past the flags (regex literals cannot contain line terminators,
+      // so the line is unchanged) and continue on the fresh stream.
+      let lex_mode = case p.mode {
+        Module -> lexer.LexModule
+        Script -> lexer.LexScript
+      }
+      let regex_line = line_of(p)
+      case lexer.tokenize_from(p.bytes, flags_end, regex_line, lex_mode) {
+        Ok(tokens) -> {
+          let p2 = P(..p, tokens: tokens, prev_line: regex_line)
+          Ok(#(p2, ast.RegExpLiteral(pattern: pattern, flags: flags_str)))
+        }
+        Error(e) ->
+          Error(LexerError(
+            lexer.lex_error_to_string(e),
+            lexer.lex_error_pos(e),
+          ))
       }
     }
+    Error(msg) -> Error(LexerError(message: msg, pos: start_pos))
   }
 }
 
@@ -6639,10 +6644,15 @@ fn parse_template_parts(
         Error(e) ->
           Error(LexerError(lexer.lex_error_to_string(e), lexer.lex_error_pos(e)))
         Ok(tokens) -> {
+          // The substitution is parsed from its own source string, so the
+          // byte buffer must match: regex literals in the expression are
+          // re-scanned from these bytes at token positions relative to `src`.
           let sub_p =
             P(
               ..p,
               tokens: tokens,
+              source: src,
+              bytes: bit_array.from_string(src),
               last_expr_assignable: False,
               last_expr_is_assignment: False,
             )
