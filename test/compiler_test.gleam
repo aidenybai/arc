@@ -8394,6 +8394,37 @@ pub fn arc_send_function_throws_test() -> Nil {
   )
 }
 
+pub fn method_body_sibling_block_const_test() -> Nil {
+  // const declarations in sibling blocks of a method body are distinct
+  // bindings, not duplicate parameter names.
+  assert_normal(
+    "class R {
+       add(s) {
+         if (s) { const n = 1; return n; } else { const n = 2; return n; }
+       }
+     }
+     new R().add(false)",
+    JsNumber(Finite(2.0)),
+  )
+}
+
+pub fn regex_body_double_slash_test() -> Nil {
+  // `//` inside a regex body is part of the pattern, not a line comment.
+  assert_normal(
+    "function f() { return /ab\\/\\//.test('ab//'); } f()",
+    JsBool(True),
+  )
+}
+
+pub fn regex_block_comment_chars_in_body_test() -> Nil {
+  // `/*` inside a regex body is part of the pattern, not a block comment.
+  assert_normal("/a\\/\\*b/.test('a/*b')", JsBool(True))
+}
+
+pub fn regex_in_template_substitution_test() -> Nil {
+  assert_normal("`t${'b'.replace(/b/, 'c')}`", JsString("tc"))
+}
+
 pub fn arc_send_skips_non_enumerable_test() -> Nil {
   // Behavior change: ArcClone now silently SKIPS non-enumerable own props
   // (previously errored).
