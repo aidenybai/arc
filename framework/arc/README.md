@@ -1,6 +1,31 @@
 # Spark on arc
 
-Runs the Spark framework on the arc engine. Arc executes the bundled output directly:
+Runs the Spark framework on the arc engine. Arc executes the bundled output directly.
+
+## Try it
+
+Run the example app (`example.ts`) on arc:
+
+```sh
+bun run example:arc
+```
+
+```
+spark example app on arc
+
+GET /
+  -> 200 hello from spark, running on arc!
+GET /users/aiden?greet=hello
+  -> 200 {"user":"aiden","greet":"hello"}
+POST /echo {"msg":"hi arc"}
+  -> 200 {"echoed":"hi arc"}
+GET /teapot
+  -> 418 I am a teapot
+GET /missing
+  -> 404 nothing here
+```
+
+## Run the test suite
 
 ```sh
 bun run test:arc
