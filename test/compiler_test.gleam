@@ -8407,3 +8407,31 @@ pub fn arc_send_skips_non_enumerable_test() -> Nil {
     JsBool(True),
   )
 }
+
+pub fn method_body_repeated_for_of_binding_test() -> Nil {
+  // Bindings in a method body are not formal parameters: sibling for-of
+  // loops reusing the same name must parse (regression: in_method leaked
+  // from the params into the body and flagged duplicates).
+  assert_normal_number(
+    "var o = {
+       m() {
+         var n = 0;
+         for (var xs = [1, 2], i = 0; i < xs.length; i++) {}
+         for (const x of [1, 2]) { n += x; }
+         for (const x of [3]) { n += x; }
+         return n;
+       },
+     };
+     class C {
+       m() {
+         for (const x of [4]) {} for (const x of [5]) {} return o.m();
+       }
+     }
+     new C().m()",
+    6.0,
+  )
+}
+
+pub fn method_duplicate_params_still_rejected_test() -> Nil {
+  assert_thrown("var bad = eval(\"({ m(a, a) {} })\");")
+}
