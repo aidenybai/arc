@@ -39,7 +39,7 @@ Arc implements core ECMAScript (classes, private fields, async/await, `Promise`,
 
 ## Arc parser bugs found while porting
 
-These are engine bugs discovered during this work, each with a minimal repro. The framework source works around all three.
+These are engine bugs discovered during this work, each with a minimal repro. All three are fixed in [#2](https://github.com/aidenybai/arc-reactor/pull/2); the framework source still carries the workarounds so it runs on older engine builds.
 
 1. Reusing a `const` name in sibling blocks inside a class method or constructor throws a false `SyntaxError: Duplicate parameter name`:
 
