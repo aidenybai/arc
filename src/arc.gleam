@@ -1,7 +1,9 @@
 import arc/beam
 import arc/compiler
-import arc/engine
+import arc/engine.{type Engine}
+import arc/fs
 import arc/internal/path
+import arc/net
 import arc/parser
 import arc/repl/examples
 import arc/vm/builtins/common.{type Builtins}
@@ -14,6 +16,7 @@ import arc/vm/state.{type Heap}
 import arc/vm/value.{type JsValue}
 import gleam/int
 import gleam/io
+import gleam/list
 import gleam/option.{None, Some}
 import gleam/string
 
@@ -232,6 +235,17 @@ type FileError
 /// capabilities here so a top-level blocking `Atomics.wait` works without
 /// any prior `Arc.*` call (`beam.run` only takes over after the script
 /// returns).
+/// Engine for the CLI runners and REPL: the BEAM `Arc.*` primitives plus
+/// the embedder's socket and filesystem host functions, all on one
+/// namespace.
+fn new_engine() -> Engine {
+  engine.define_namespace(
+    engine.new(),
+    "Arc",
+    list.flatten([beam.namespace(), net.namespace(), fs.namespace()]),
+  )
+}
+
 fn run_file(
   path: String,
   prepare: fn(state.State) -> state.State,
@@ -257,7 +271,7 @@ fn run_module_file(
   prepare: fn(state.State) -> state.State,
   finish: fn(state.State) -> state.State,
 ) -> Nil {
-  let eng = engine.new() |> beam.install("Arc")
+  let eng = new_engine()
   case
     engine.eval_module_prepared_with(
       eng,
@@ -296,7 +310,7 @@ fn run_script_file(
   prepare: fn(state.State) -> state.State,
   finish: fn(state.State) -> state.State,
 ) -> Nil {
-  let eng = engine.new() |> beam.install("Arc")
+  let eng = new_engine()
   case engine.eval_prepared_with(eng, source, prepare, finish) {
     Ok(#(ThrowCompletion(val, new_heap), _)) ->
       io.println("Uncaught " <> object.format_error(val, new_heap))
@@ -306,7 +320,7 @@ fn run_script_file(
 }
 
 fn new_repl_state() -> ReplState {
-  let eng = engine.new() |> beam.install("Arc")
+  let eng = new_engine()
   ReplState(
     heap: engine.heap(eng),
     builtins: engine.builtins(eng),
