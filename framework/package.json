@@ -10,7 +10,9 @@
 	"scripts": {
 		"test": "bun test",
 		"typecheck": "tsc --noEmit",
-		"example": "bun run examples/hello.ts"
+		"example": "bun run examples/hello.ts",
+		"build:arc": "bun build arc/spark-on-arc.ts --outfile arc/spark-on-arc.js --target browser",
+		"test:arc": "bun run build:arc && cd .. && gleam run -- framework/arc/spark-on-arc.js"
 	},
 	"devDependencies": {
 		"@types/bun": "^1.3.0",

@@ -39,17 +39,17 @@ export class Router<T> {
 		let node = this.#root;
 		for (const segment of splitPath(path)) {
 			if (segment.startsWith(':')) {
-				const name = segment.slice(1);
-				node.paramChild ??= { name, node: createNode() };
-				if (node.paramChild.name !== name) {
+				const paramName = segment.slice(1);
+				node.paramChild ??= { name: paramName, node: createNode() };
+				if (node.paramChild.name !== paramName) {
 					throw new Error(
-						`conflicting param names at the same position: ':${node.paramChild.name}' and ':${name}'`,
+						`conflicting param names at the same position: ':${node.paramChild.name}' and ':${paramName}'`,
 					);
 				}
 				node = node.paramChild.node;
 			} else if (segment.startsWith('*')) {
-				const name = segment.slice(1) || '*';
-				node.wildcardChild ??= { name, node: createNode() };
+				const wildcardName = segment.slice(1) || '*';
+				node.wildcardChild ??= { name: wildcardName, node: createNode() };
 				node = node.wildcardChild.node;
 			} else {
 				let child = node.children.get(segment);

@@ -62,7 +62,8 @@ export class App {
 	route(path: string, app: App): App {
 		const prefix = path.replace(/\/+$/, '');
 		for (const { method, path: subPath, handler } of app.#routes()) {
-			this.#router.add(method, `${prefix}/${subPath.replace(/^\/+/, '')}`, handler);
+			const sub = subPath.replace(/^\/+/, '');
+			this.#router.add(method, `${prefix}/${sub}`, handler);
 		}
 		return this;
 	}
@@ -96,9 +97,8 @@ export class App {
 	/** Dispatch a request without a server — handy in tests. */
 	request(input: string | Request, init?: RequestInit): Promise<Response> {
 		if (input instanceof Request) return this.fetch(input);
-		const url = /^https?:\/\//.test(input)
-			? input
-			: `http://localhost/${input.replace(/^\/+/, '')}`;
+		const trimmed = input.replace(/^\/+/, '');
+		const url = /^https?:[/][/]/.test(input) ? input : `http://localhost/${trimmed}`;
 		return this.fetch(new Request(url, init));
 	}
 

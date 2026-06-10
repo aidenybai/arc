@@ -224,6 +224,16 @@ describe('my app', () => {
 
 Run the framework's own suite with `bun test` in this directory, and the type checker with `bun run typecheck`.
 
+## Running on arc
+
+Spark also runs on [arc](../README.md), the JavaScript engine in this repository. Arc has no web platform globals, so `arc/webstd.ts` provides minimal `Request`, `Response`, `Headers`, `URL`, and `URLSearchParams` implementations, and `arc/spark-on-arc.ts` exercises the full framework (routing, middleware, errors, sub-apps, CORS, logger) through `app.request`.
+
+```sh
+bun run test:arc   # bundles the suite with bun, then runs it with `gleam run`
+```
+
+The suite passes 22 checks on arc. See `arc/` for known arc parser limitations the code works around.
+
 ## Deploying to Railway
 
 Railway detects Bun projects and runs them without extra configuration. The `serve` helper already reads the `PORT` environment variable, which is the only contract Railway requires.
