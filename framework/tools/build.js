@@ -1,5 +1,6 @@
-// Build Volt: strip types from framework/src/*.ts into framework/lib/*.js
-// and framework/test/*.test.ts into framework/test/dist/*.test.js.
+// Build Volt: strip types from framework/src/*.ts into framework/lib/*.js,
+// framework/test/*.ts into framework/test/dist/*.js, and
+// framework/examples/*.ts into framework/examples/dist/*.js.
 //
 // Runs on arc itself:
 //
@@ -29,4 +30,9 @@ Arc.log("built " + libCount + " modules into " + ROOT + "/lib");
 if (Arc.exists(ROOT + "/test")) {
   const testCount = buildDir(ROOT + "/test", ROOT + "/test/dist");
   Arc.log("built " + testCount + " test modules into " + ROOT + "/test/dist");
+}
+
+if (Arc.exists(ROOT + "/examples")) {
+  const exampleCount = buildDir(ROOT + "/examples", ROOT + "/examples/dist");
+  Arc.log("built " + exampleCount + " example modules into " + ROOT + "/examples/dist");
 }

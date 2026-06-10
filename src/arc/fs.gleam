@@ -9,10 +9,13 @@
 ////     Arc.writeFile("dist/app.js", output);
 ////     const names = Arc.readDir("src");           // string[]
 ////     Arc.exists("gleam.toml");                   // boolean
+////     Arc.env("PORT");                            // string | null
 
 import arc/vm/builtins/common
 import arc/vm/state.{type HostFn, type State, State}
-import arc/vm/value.{type JsValue, JsBool, JsObject, JsString, JsUndefined}
+import arc/vm/value.{
+  type JsValue, JsBool, JsNull, JsObject, JsString, JsUndefined,
+}
 import gleam/list
 
 // -- FFI -----------------------------------------------------------------------
@@ -29,6 +32,9 @@ fn ffi_list_dir(path: String) -> Result(List(String), String)
 @external(erlang, "arc_fs_ffi", "exists")
 fn ffi_exists(path: String) -> Bool
 
+@external(erlang, "arc_fs_ffi", "getenv")
+fn ffi_getenv(name: String) -> Result(String, Nil)
+
 // -- namespace -----------------------------------------------------------------
 
 /// The filesystem host functions, for concatenation onto the `Arc`
@@ -39,6 +45,7 @@ pub fn namespace() -> List(#(String, Int, HostFn)) {
     #("writeFile", 2, write_file),
     #("readDir", 1, read_dir),
     #("exists", 1, exists),
+    #("env", 1, env),
   ]
 }
 
@@ -118,5 +125,21 @@ fn exists(
   case args {
     [JsString(path), ..] -> #(state, Ok(JsBool(ffi_exists(path))))
     _ -> state.type_error(state, "Arc.exists: expected a path string")
+  }
+}
+
+/// `Arc.env(name)` — environment variable value, or null when unset.
+fn env(
+  args: List(JsValue),
+  _this: JsValue,
+  state: State,
+) -> #(State, Result(JsValue, JsValue)) {
+  case args {
+    [JsString(name), ..] ->
+      case ffi_getenv(name) {
+        Ok(val) -> #(state, Ok(JsString(val)))
+        Error(Nil) -> #(state, Ok(JsNull))
+      }
+    _ -> state.type_error(state, "Arc.env: expected a name string")
   }
 }

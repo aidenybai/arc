@@ -1,5 +1,5 @@
 -module(arc_fs_ffi).
--export([read_file/1, write_file/2, list_dir/1, exists/1]).
+-export([read_file/1, write_file/2, list_dir/1, exists/1, getenv/1]).
 
 %% Filesystem embedder layer for `src/arc/fs.gleam`. Same byte bridge as
 %% arc_net_ffi: file contents cross the boundary as latin1 byte strings
@@ -34,3 +34,9 @@ list_dir(Path) ->
 
 exists(Path) ->
     filelib:is_file(Path).
+
+getenv(Name) ->
+    case os:getenv(unicode:characters_to_list(Name)) of
+        false -> {error, nil};
+        Value -> {ok, unicode:characters_to_binary(Value)}
+    end.
